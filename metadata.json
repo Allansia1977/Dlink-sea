@@ -1,0 +1,5 @@
+{
+  "name": "Retail Store Auditor",
+  "description": "Capture photos of retail stores and export them to a PowerPoint presentation or send via email.",
+  "requestFramePermissions": ["camera"]
+}
