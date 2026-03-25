@@ -103,6 +103,22 @@ export default function App() {
 
     const fileArray = Array.from(files);
     
+    // If the photo came from the camera, trigger a download to save it to the device
+    if (e.target === cameraInputRef.current) {
+      fileArray.forEach(file => {
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tekmedia_capture_${Date.now()}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Clean up the URL object after a short delay to ensure download starts
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      });
+    }
+
     const newPhotos: string[] = await Promise.all(
       fileArray.map((file) => compressImage(file))
     );
@@ -154,36 +170,51 @@ export default function App() {
     return (
       <div className="dark">
         <div className="min-h-screen bg-black text-gray-100 font-sans flex justify-center items-center">
-          <div className="w-full max-w-md bg-gray-950 min-h-screen shadow-2xl relative flex flex-col justify-center items-center p-8 border-x border-gray-900 text-center">
+          <div className="w-full max-w-md bg-gradient-to-br from-gray-900 via-slate-900 to-black min-h-screen shadow-2xl relative flex flex-col justify-center items-center p-8 border-x border-gray-800 text-center overflow-hidden">
             
-            <div className="flex-1 flex flex-col justify-center items-center space-y-8 w-full">
-              <div className="bg-white p-4 rounded-2xl shadow-lg">
-                <img 
-                  src="https://www.tekmedia.com.sg/wp-content/uploads/2024/03/Mask-Group-1.jpg" 
-                  alt="TEKMEDIA Logo" 
-                  className="w-48 h-auto object-contain"
-                  referrerPolicy="no-referrer"
-                />
+            {/* Decorative background gradients */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[50%] rounded-full bg-blue-900/20 blur-[100px]"></div>
+              <div className="absolute bottom-[10%] -right-[20%] w-[60%] h-[60%] rounded-full bg-indigo-900/20 blur-[120px]"></div>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center items-center space-y-10 w-full z-10">
+              <div className="bg-white/5 backdrop-blur-xl p-6 rounded-[2rem] shadow-2xl border border-white/10">
+                <div className="bg-white p-5 rounded-2xl shadow-inner">
+                  <img 
+                    src="https://www.tekmedia.com.sg/wp-content/uploads/2024/03/Mask-Group-1.jpg" 
+                    alt="TEKMEDIA Logo" 
+                    className="w-48 h-auto object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-white tracking-tight">TEKMEDIA</h1>
-                <h2 className="text-xl font-medium text-blue-400">VM Solution</h2>
+              <div className="space-y-3">
+                <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 tracking-tight">TEKMEDIA</h1>
+                <h2 className="text-xl font-medium text-blue-400 tracking-wide">VM Solution</h2>
+                <p className="text-sm text-gray-400 font-light italic px-4">Empowering your sales force, enhancing your brand</p>
               </div>
             </div>
 
-            <div className="w-full pb-12 space-y-8">
+            <div className="w-full pb-12 space-y-10 z-10">
               <button 
                 onClick={() => setShowCoverPage(false)}
-                className="w-full max-w-[200px] mx-auto flex justify-center items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
+                className="group relative overflow-hidden w-full max-w-[220px] mx-auto flex justify-center items-center px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_40px_rgba(59,130,246,0.6)] hover:scale-105 active:scale-95"
               >
-                Enter
-                <ChevronRight className="w-5 h-5 ml-1" />
+                {/* Flashy shine effect */}
+                <div className="absolute inset-0 -translate-x-[150%] skew-x-12 bg-gradient-to-r from-transparent via-white/50 to-transparent group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out"></div>
+                
+                <span className="relative z-10 flex items-center">
+                  Enter App
+                  <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
+                </span>
               </button>
               
-              <div className="pt-8 border-t border-gray-800 w-full">
-                <p className="text-xs text-gray-500 uppercase tracking-wider">Powered by</p>
-                <p className="text-sm font-semibold text-gray-300 mt-1">Allan Sia</p>
+              <div className="pt-8 border-t border-white/10 w-full">
+                <p className="text-xs text-gray-500 uppercase tracking-widest">Powered by</p>
+                <p className="text-sm font-semibold text-gray-300 mt-1 tracking-wide">Allan & Jesclyn</p>
+                <p className="text-xs text-gray-600 mt-2">Copyright 2026</p>
               </div>
             </div>
             
