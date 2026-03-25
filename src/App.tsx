@@ -103,22 +103,6 @@ export default function App() {
 
     const fileArray = Array.from(files);
     
-    // If the photo came from the camera, trigger a download to save it to the device
-    if (e.target === cameraInputRef.current) {
-      fileArray.forEach(file => {
-        const url = URL.createObjectURL(file);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `tekmedia_capture_${Date.now()}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        // Clean up the URL object after a short delay to ensure download starts
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      });
-    }
-
     const newPhotos: string[] = await Promise.all(
       fileArray.map((file) => compressImage(file))
     );
