@@ -23,22 +23,12 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
       slide.addText(`${store.name} - ${store.location} - ${todayDate}`, {
         x: 0.5,
         y: 0.2,
-        w: "80%",
+        w: "90%",
         h: 0.6,
         fontSize: 24,
         bold: true,
         color: "363636",
         align: "center",
-      });
-
-      // Add Logo at top right
-      slide.addImage({
-        path: "https://www.arab-computers.com/wp-content/uploads/2025/01/hp.png",
-        x: 8.5,
-        y: 0.1,
-        w: 0.8,
-        h: 0.8,
-        sizing: { type: "contain", w: 0.8, h: 0.8 },
       });
 
       // Add Photos (up to 8 per slide)
