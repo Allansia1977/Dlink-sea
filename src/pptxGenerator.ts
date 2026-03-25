@@ -23,7 +23,7 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
       slide.addText(`${store.name} - ${store.location} - ${todayDate}`, {
         x: 0.5,
         y: 0.2,
-        w: 8.0,
+        w: "80%",
         h: 0.6,
         fontSize: 24,
         bold: true,
@@ -31,14 +31,14 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
         align: "center",
       });
 
-      // Add HP Logo to top right
+      // Add Logo at top right
       slide.addImage({
         path: "https://sg-media.apjonlinecdn.com/logo/stores/1/HP_New_logo_2.svg",
-        x: 8.8,
-        y: 0.15,
-        w: 0.8,
-        h: 0.8,
-        sizing: { type: "contain", w: 0.8, h: 0.8 }
+        x: 8.5,
+        y: 0.1,
+        w: 1.2,
+        h: 0.6,
+        sizing: { type: "contain", w: 1.2, h: 0.6 },
       });
 
       // Add Photos (up to 8 per slide)
