@@ -15,6 +15,8 @@ export default function App() {
   const [selectedCustomId, setSelectedCustomId] = useState<string>("");
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [previewStoreId, setPreviewStoreId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{isOpen: boolean, message: string, onConfirm: () => void}>({ isOpen: false, message: "", onConfirm: () => {} });
+  const [alertDialog, setAlertDialog] = useState<{isOpen: boolean, message: string}>({ isOpen: false, message: "" });
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const cameraCustomInputRef = useRef<HTMLInputElement>(null);
@@ -30,7 +32,10 @@ export default function App() {
       await saveStores(newStores);
     } catch (error) {
       console.error("Failed to save stores:", error);
-      alert("Storage limit reached! Please delete some photos or export your current audit.");
+      setAlertDialog({
+        isOpen: true,
+        message: "Storage limit reached! Please delete some photos or export your current audit."
+      });
     }
   };
 
@@ -78,15 +83,37 @@ export default function App() {
 
   const handleDeleteStore = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this store and all its photos?")) {
-      await handleSaveStores(stores.filter((s) => s.id !== id));
-      if (selectedStoreId === id) {
-        setSelectedStoreId("");
+    setConfirmDialog({
+      isOpen: true,
+      message: "Are you sure you want to delete this store and all its photos?",
+      onConfirm: async () => {
+        await handleSaveStores(stores.filter((s) => s.id !== id));
+        if (selectedStoreId === id) {
+          setSelectedStoreId("");
+        }
       }
-    }
+    });
   };
 
-  const handleUpdateStoreData = async (storeId: string, field: 'topic' | 'remark', value: string) => {
+  const handleClearAll = async () => {
+    setConfirmDialog({
+      isOpen: true,
+      message: "All store photo and info will be clear, proceed?",
+      onConfirm: async () => {
+        await handleSaveStores([]);
+        setSelectedStoreId("");
+        setNewStoreName("");
+        setNewStoreLocation("");
+        setNewTopic("");
+        setNewRemark("");
+        setSelectedCustomId("");
+        setIsConfirmed(false);
+        setPreviewStoreId(null);
+      }
+    });
+  };
+
+  const handleUpdateStoreData = async (storeId: string, field: 'topic' | 'remark' | 'name' | 'location', value: string) => {
     const updatedStores = stores.map((s) =>
       s.id === storeId ? { ...s, [field]: value } : s
     );
@@ -199,17 +226,21 @@ export default function App() {
 
   const handleDeletePhoto = async (storeId: string, photoIndex: number) => {
     if (!storeId) return;
-    if (window.confirm("Delete this photo?")) {
-      const updatedStores = stores.map((s) => {
-        if (s.id === storeId) {
-          const newPhotos = [...s.photos];
-          newPhotos.splice(photoIndex, 1);
-          return { ...s, photos: newPhotos };
-        }
-        return s;
-      });
-      await handleSaveStores(updatedStores);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      message: "Delete this photo?",
+      onConfirm: async () => {
+        const updatedStores = stores.map((s) => {
+          if (s.id === storeId) {
+            const newPhotos = [...s.photos];
+            newPhotos.splice(photoIndex, 1);
+            return { ...s, photos: newPhotos };
+          }
+          return s;
+        });
+        await handleSaveStores(updatedStores);
+      }
+    });
   };
 
   const handleDownloadPPTX = async () => {
@@ -218,7 +249,10 @@ export default function App() {
       await pptx.writeFile({ fileName: "Retail_Store_Audit.pptx" });
     } catch (error) {
       console.error("Error generating PPTX:", error);
-      alert("Failed to generate PowerPoint file.");
+      setAlertDialog({
+        isOpen: true,
+        message: "Failed to generate PowerPoint file."
+      });
     }
   };
 
@@ -357,7 +391,30 @@ export default function App() {
 
                 {selectedStore && selectedStore.type !== 'custom' && (
                   <div className="space-y-4 pt-3 border-t border-gray-800">
-                    <div className="flex justify-between items-center">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Store Name</label>
+                        <input
+                          type="text"
+                          value={selectedStore.name || ""}
+                          onChange={(e) => handleUpdateStoreData(selectedStoreId, 'name', e.target.value)}
+                          className="w-full px-3 py-2.5 text-sm bg-gray-950 border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-white placeholder-gray-500"
+                          placeholder="Enter store name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Location</label>
+                        <input
+                          type="text"
+                          value={selectedStore.location || ""}
+                          onChange={(e) => handleUpdateStoreData(selectedStoreId, 'location', e.target.value)}
+                          className="w-full px-3 py-2.5 text-sm bg-gray-950 border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-white placeholder-gray-500"
+                          placeholder="Enter location"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-800">
                       <span className="text-sm font-medium text-gray-300">
                         {selectedStore.photos.length} {selectedStore.photos.length === 1 ? 'Photo' : 'Photos'}
                       </span>
@@ -645,6 +702,14 @@ export default function App() {
                       <Download className="w-5 h-5 mr-2" />
                       Generate & Download PPTX
                     </button>
+                    
+                    <button
+                      onClick={handleClearAll}
+                      className="w-full flex justify-center items-center px-4 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm mt-3"
+                    >
+                      <Trash2 className="w-5 h-5 mr-2" />
+                      Clear All Data
+                    </button>
                   </div>
                 )}
               </div>
@@ -687,6 +752,49 @@ export default function App() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Confirm Dialog */}
+          {confirmDialog.isOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-sm w-full shadow-2xl">
+                <h3 className="text-lg font-semibold text-white mb-2">Confirm Action</h3>
+                <p className="text-gray-300 mb-6">{confirmDialog.message}</p>
+                <div className="flex space-x-3">
+                  <button 
+                    onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} 
+                    className="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      confirmDialog.onConfirm();
+                      setConfirmDialog({ ...confirmDialog, isOpen: false });
+                    }} 
+                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Proceed
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Alert Dialog */}
+          {alertDialog.isOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-sm w-full shadow-2xl">
+                <h3 className="text-lg font-semibold text-white mb-2">Notice</h3>
+                <p className="text-gray-300 mb-6">{alertDialog.message}</p>
+                <button 
+                  onClick={() => setAlertDialog({ ...alertDialog, isOpen: false })} 
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  OK
+                </button>
               </div>
             </div>
           )}
