@@ -4,6 +4,9 @@ export interface Store {
   id: string;
   name: string;
   location: string;
+  topic?: string;
+  remark?: string;
+  type?: 'store' | 'custom';
   photos: string[]; // Base64 strings
   visitedAt?: string; // ISO string
 }

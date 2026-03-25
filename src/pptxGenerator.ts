@@ -20,16 +20,58 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
 
       const todayDate = new Date().toLocaleDateString();
       // Add Title
-      slide.addText(`${store.name} - ${store.location} - ${todayDate}`, {
-        x: 0.5,
-        y: 0.2,
-        w: "90%",
-        h: 0.6,
-        fontSize: 24,
-        bold: true,
-        color: "363636",
-        align: "center",
-      });
+      if (store.type === 'custom') {
+        slide.addText(`Custom Data: ${store.topic}`, {
+          x: 0.5,
+          y: 0.1,
+          w: "90%",
+          h: 0.4,
+          fontSize: 24,
+          bold: true,
+          color: "363636",
+          align: "center",
+        });
+
+        if (store.remark) {
+          slide.addText(`Remark: ${store.remark}`, {
+            x: 0.5,
+            y: 0.5,
+            w: "90%",
+            h: 0.3,
+            fontSize: 14,
+            color: "666666",
+            align: "center",
+          });
+        }
+      } else {
+        slide.addText(`${store.name} - ${store.location} - ${todayDate}`, {
+          x: 0.5,
+          y: 0.1,
+          w: "90%",
+          h: 0.4,
+          fontSize: 24,
+          bold: true,
+          color: "363636",
+          align: "center",
+        });
+
+        if (store.topic || store.remark) {
+          const subtitleText = [
+            store.topic ? `Topic: ${store.topic}` : "",
+            store.remark ? `Remark: ${store.remark}` : ""
+          ].filter(Boolean).join(" | ");
+
+          slide.addText(subtitleText, {
+            x: 0.5,
+            y: 0.5,
+            w: "90%",
+            h: 0.3,
+            fontSize: 14,
+            color: "666666",
+            align: "center",
+          });
+        }
+      }
 
       // Add Photos (up to 8 per slide)
       // Layout: 2 rows, 4 columns

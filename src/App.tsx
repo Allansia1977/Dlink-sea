@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { Store, getStores, saveStores } from "./store";
 import { generatePPTX } from "./pptxGenerator";
-import { Plus, Camera, Trash2, Download, Image as ImageIcon, CheckCircle, Store as StoreIcon, Clock, MapPin, ChevronRight, X } from "lucide-react";
+import { Plus, Camera, Trash2, Download, Image as ImageIcon, CheckCircle, Store as StoreIcon, Clock, MapPin, ChevronRight, X, FileText, ChevronUp, ChevronDown } from "lucide-react";
 
 export default function App() {
   const [showCoverPage, setShowCoverPage] = useState(true);
@@ -10,10 +10,15 @@ export default function App() {
   const [selectedStoreId, setSelectedStoreId] = useState<string>("");
   const [newStoreName, setNewStoreName] = useState("");
   const [newStoreLocation, setNewStoreLocation] = useState("");
+  const [newTopic, setNewTopic] = useState("");
+  const [newRemark, setNewRemark] = useState("");
+  const [selectedCustomId, setSelectedCustomId] = useState<string>("");
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [previewStoreId, setPreviewStoreId] = useState<string | null>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraCustomInputRef = useRef<HTMLInputElement>(null);
+  const galleryCustomInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getStores().then(setStores);
@@ -37,6 +42,7 @@ export default function App() {
       id: uuidv4(),
       name: newStoreName.trim(),
       location: newStoreLocation.trim(),
+      type: 'store',
       photos: [],
       visitedAt: new Date().toISOString(),
     };
@@ -48,6 +54,28 @@ export default function App() {
     setNewStoreLocation("");
   };
 
+  const handleAddCustomEntry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTopic.trim()) return;
+
+    const newEntry: Store = {
+      id: uuidv4(),
+      name: "Custom Data",
+      location: "",
+      topic: newTopic.trim(),
+      remark: newRemark.trim(),
+      type: 'custom',
+      photos: [],
+      visitedAt: new Date().toISOString(),
+    };
+
+    const newStores = [...stores, newEntry];
+    await handleSaveStores(newStores);
+    setSelectedCustomId(newEntry.id);
+    setNewTopic("");
+    setNewRemark("");
+  };
+
   const handleDeleteStore = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this store and all its photos?")) {
@@ -56,6 +84,26 @@ export default function App() {
         setSelectedStoreId("");
       }
     }
+  };
+
+  const handleUpdateStoreData = async (storeId: string, field: 'topic' | 'remark', value: string) => {
+    const updatedStores = stores.map((s) =>
+      s.id === storeId ? { ...s, [field]: value } : s
+    );
+    await handleSaveStores(updatedStores);
+  };
+
+  const moveStore = async (index: number, direction: 'up' | 'down', e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === stores.length - 1) return;
+
+    const newStores = [...stores];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    [newStores[index], newStores[targetIndex]] = [newStores[targetIndex], newStores[index]];
+    
+    await handleSaveStores(newStores);
   };
 
   const compressImage = (file: File): Promise<string> => {
@@ -120,6 +168,32 @@ export default function App() {
     }
     if (galleryInputRef.current) {
       galleryInputRef.current.value = "";
+    }
+  };
+
+  const handleCustomPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedCustomId) return;
+
+    const fileArray = Array.from(files);
+
+    const newPhotos: string[] = await Promise.all(
+      fileArray.map((file) => compressImage(file))
+    );
+
+    const updatedStores = stores.map((s) =>
+      s.id === selectedCustomId
+        ? { ...s, photos: [...s.photos, ...newPhotos], visitedAt: new Date().toISOString() }
+        : s
+    );
+    
+    await handleSaveStores(updatedStores);
+
+    if (cameraCustomInputRef.current) {
+      cameraCustomInputRef.current.value = "";
+    }
+    if (galleryCustomInputRef.current) {
+      galleryCustomInputRef.current.value = "";
     }
   };
 
@@ -263,10 +337,10 @@ export default function App() {
               </form>
             </section>
 
-            {/* 2. Capture Photos */}
+            {/* 2. Store Capture Photos */}
             <section className="space-y-3">
               <h2 className="text-lg font-semibold flex items-center text-white">
-                <Camera className="w-5 h-5 mr-2 text-green-500"/> 2. Capture Photos
+                <Camera className="w-5 h-5 mr-2 text-green-500"/> 2. Store Capture Photos
               </h2>
               <div className="bg-gray-900 p-4 rounded-xl border border-gray-800 space-y-4 shadow-sm">
                 <select
@@ -276,12 +350,12 @@ export default function App() {
                   style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
                 >
                   <option value="">-- Select a store --</option>
-                  {stores.map(s => (
+                  {stores.filter(s => s.type !== 'custom').map(s => (
                     <option key={s.id} value={s.id}>{s.name} ({s.location})</option>
                   ))}
                 </select>
 
-                {selectedStore && (
+                {selectedStore && selectedStore.type !== 'custom' && (
                   <div className="space-y-4 pt-3 border-t border-gray-800">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-300">
@@ -344,10 +418,143 @@ export default function App() {
               </div>
             </section>
 
-            {/* 3. Summary & Export */}
+            {/* 3. Custom Data Entry */}
             <section className="space-y-3">
               <h2 className="text-lg font-semibold flex items-center text-white">
-                <CheckCircle className="w-5 h-5 mr-2 text-purple-500"/> 3. Summary & Export
+                <FileText className="w-5 h-5 mr-2 text-yellow-500"/> 3. Custom Data Entry
+              </h2>
+              <div className="bg-gray-900 p-4 rounded-xl border border-gray-800 space-y-4 shadow-sm">
+                <form onSubmit={handleAddCustomEntry} className="flex items-start space-x-2">
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={newTopic}
+                      onChange={(e) => setNewTopic(e.target.value)}
+                      className="w-full px-3 py-2.5 text-sm bg-gray-950 border border-gray-700 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-white placeholder-gray-500"
+                      placeholder="Topic"
+                      required
+                    />
+                    <input
+                      type="text"
+                      value={newRemark}
+                      onChange={(e) => setNewRemark(e.target.value)}
+                      className="w-full px-3 py-2.5 text-sm bg-gray-950 border border-gray-700 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-white placeholder-gray-500"
+                      placeholder="Remark"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex justify-center items-center"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </form>
+
+                {stores.filter(s => s.type === 'custom').length > 0 && (
+                  <div className="pt-4 border-t border-gray-800 space-y-4">
+                    <select
+                      value={selectedCustomId}
+                      onChange={(e) => setSelectedCustomId(e.target.value)}
+                      className="w-full bg-gray-950 border border-gray-700 text-white rounded-lg p-3 outline-none focus:ring-2 focus:ring-yellow-500 appearance-none"
+                      style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
+                    >
+                      <option value="">-- Select a custom entry --</option>
+                      {stores.filter(s => s.type === 'custom').map(s => (
+                        <option key={s.id} value={s.id}>{s.topic}</option>
+                      ))}
+                    </select>
+
+                    {selectedCustomId && stores.find(s => s.id === selectedCustomId) && (
+                      <div className="space-y-4 pt-3 border-t border-gray-800">
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Topic</label>
+                            <input
+                              type="text"
+                              value={stores.find(s => s.id === selectedCustomId)?.topic || ""}
+                              onChange={(e) => handleUpdateStoreData(selectedCustomId, 'topic', e.target.value)}
+                              className="w-full px-3 py-2.5 text-sm bg-gray-950 border border-gray-700 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-white placeholder-gray-500"
+                              placeholder="Enter topic"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Remark</label>
+                            <textarea
+                              value={stores.find(s => s.id === selectedCustomId)?.remark || ""}
+                              onChange={(e) => handleUpdateStoreData(selectedCustomId, 'remark', e.target.value)}
+                              className="w-full px-3 py-2.5 text-sm bg-gray-950 border border-gray-700 rounded-lg focus:ring-2 focus:ring-yellow-500 outline-none text-white placeholder-gray-500 min-h-[80px]"
+                              placeholder="Enter remark"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-800">
+                          <span className="text-sm font-medium text-gray-300">
+                            {stores.find(s => s.id === selectedCustomId)?.photos.length} Photos
+                          </span>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => cameraCustomInputRef.current?.click()}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm"
+                            >
+                              <Camera className="w-4 h-4 mr-1.5"/> Camera
+                            </button>
+                            <button
+                              onClick={() => galleryCustomInputRef.current?.click()}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center transition-colors shadow-sm"
+                            >
+                              <ImageIcon className="w-4 h-4 mr-1.5"/> Upload
+                            </button>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            className="hidden"
+                            ref={cameraCustomInputRef}
+                            onChange={handleCustomPhotoUpload}
+                          />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            className="hidden"
+                            ref={galleryCustomInputRef}
+                            onChange={handleCustomPhotoUpload}
+                          />
+                        </div>
+
+                        {stores.find(s => s.id === selectedCustomId)?.photos.length === 0 ? (
+                          <div className="bg-gray-950 rounded-xl border-2 border-dashed border-gray-800 p-8 text-center">
+                            <ImageIcon className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+                            <p className="text-gray-500 text-sm">No photos added yet.</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-3">
+                            {stores.find(s => s.id === selectedCustomId)?.photos.map((photo, index) => (
+                              <div key={index} className="relative group rounded-lg overflow-hidden shadow-sm border border-gray-800 bg-gray-950 aspect-square">
+                                <img src={photo} alt={`Custom photo ${index + 1}`} className="w-full h-full object-cover" />
+                                <button
+                                  onClick={() => handleDeletePhoto(selectedCustomId, index)}
+                                  className="absolute top-1 right-1 p-1.5 bg-red-500/90 text-white rounded-full hover:bg-red-600 shadow-md"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* 4. Summary & Export */}
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold flex items-center text-white">
+                <CheckCircle className="w-5 h-5 mr-2 text-purple-500"/> 4. Summary & Export
               </h2>
               <div className="bg-gray-900 p-4 rounded-xl border border-gray-800 space-y-4 shadow-sm">
                 
@@ -355,17 +562,46 @@ export default function App() {
                   <p className="text-sm text-gray-500 text-center py-4">No stores added yet.</p>
                 ) : (
                   <div className="space-y-3">
-                    {stores.map(store => (
+                    {stores.map((store, index) => (
                       <div 
                         key={store.id} 
                         onClick={() => setPreviewStoreId(store.id)}
-                        className="bg-gray-950 p-3 rounded-lg border border-gray-800 flex justify-between items-center cursor-pointer hover:bg-gray-900 transition-colors"
+                        className="bg-gray-950 p-3 rounded-lg border border-gray-800 flex items-center cursor-pointer hover:bg-gray-900 transition-colors"
                       >
-                        <div className="overflow-hidden pr-2">
-                          <div className="font-semibold text-sm text-white truncate">{store.name}</div>
-                          <div className="text-xs text-gray-400 flex items-center mt-1 truncate">
-                            <MapPin className="w-3 h-3 mr-1 shrink-0"/>{store.location}
-                          </div>
+                        <div className="flex flex-col items-center mr-3 space-y-1">
+                          <button 
+                            onClick={(e) => moveStore(index, 'up', e)}
+                            disabled={index === 0}
+                            className={`p-1 rounded ${index === 0 ? 'text-gray-800 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={(e) => moveStore(index, 'down', e)}
+                            disabled={index === stores.length - 1}
+                            className={`p-1 rounded ${index === stores.length - 1 ? 'text-gray-800 cursor-not-allowed' : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden pr-2">
+                          {store.type === 'custom' ? (
+                            <>
+                              <div className="font-semibold text-sm text-yellow-500 truncate">Custom: {store.topic}</div>
+                              {store.remark && (
+                                <div className="text-xs text-gray-400 flex items-center mt-1 truncate">
+                                  <FileText className="w-3 h-3 mr-1 shrink-0"/>{store.remark}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div className="font-semibold text-sm text-white truncate">{store.name}</div>
+                              <div className="text-xs text-gray-400 flex items-center mt-1 truncate">
+                                <MapPin className="w-3 h-3 mr-1 shrink-0"/>{store.location}
+                              </div>
+                            </>
+                          )}
                           {store.visitedAt && (
                             <div className="text-xs text-gray-400 flex items-center mt-0.5">
                               <Clock className="w-3 h-3 mr-1 shrink-0"/>
