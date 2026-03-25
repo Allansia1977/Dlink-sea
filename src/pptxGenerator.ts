@@ -33,7 +33,7 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
 
       // Add Logo at top right
       slide.addImage({
-        path: "https://www.hp.com/content/dam/sites/worldwide/hp-information/visual-identity/brand-central-footer@2x.png",
+        path: "https://sg-media.apjonlinecdn.com/logo/stores/1/HP_New_logo_2.svg",
         x: 8.5,
         y: 0.1,
         w: 1.2,
