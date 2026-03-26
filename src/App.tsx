@@ -176,7 +176,7 @@ export default function App() {
     const files = e.target.files;
     if (!files || files.length === 0 || !selectedStoreId) return;
 
-    const fileArray = Array.from(files);
+    const fileArray = Array.from(files) as File[];
 
     const newPhotos: string[] = await Promise.all(
       fileArray.map((file) => compressImage(file))
@@ -202,7 +202,7 @@ export default function App() {
     const files = e.target.files;
     if (!files || files.length === 0 || !selectedCustomId) return;
 
-    const fileArray = Array.from(files);
+    const fileArray = Array.from(files) as File[];
 
     const newPhotos: string[] = await Promise.all(
       fileArray.map((file) => compressImage(file))

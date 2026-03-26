@@ -91,6 +91,15 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
           sizing: { type: "contain", w: 2.3, h: 2.1 },
         });
       });
+
+      // Add Logo to top right (at the end to ensure it's on top)
+      slide.addImage({
+        path: "https://image2url.com/r2/default/images/1774539321646-8a904fc8-3f76-4d0a-a55e-4278dfbafa78.jpg",
+        x: 9.56,
+        y: 0.04,
+        w: 0.4,
+        h: 0.4,
+      });
     }
   }
 
