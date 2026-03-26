@@ -412,6 +412,15 @@ export default function App() {
                           placeholder="Enter location"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-1">Remark</label>
+                        <textarea
+                          value={selectedStore.remark || ""}
+                          onChange={(e) => handleUpdateStoreData(selectedStoreId, 'remark', e.target.value)}
+                          className="w-full px-3 py-2.5 text-sm bg-gray-950 border border-gray-700 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-white placeholder-gray-500 min-h-[80px]"
+                          placeholder="Enter remark"
+                        />
+                      </div>
                     </div>
 
                     <div className="flex justify-between items-center pt-2 border-t border-gray-800">
@@ -657,6 +666,11 @@ export default function App() {
                               <div className="text-xs text-gray-400 flex items-center mt-1 truncate">
                                 <MapPin className="w-3 h-3 mr-1 shrink-0"/>{store.location}
                               </div>
+                              {store.remark && (
+                                <div className="text-xs text-gray-400 flex items-center mt-1 truncate">
+                                  <FileText className="w-3 h-3 mr-1 shrink-0"/>{store.remark}
+                                </div>
+                              )}
                             </>
                           )}
                           {store.visitedAt && (
