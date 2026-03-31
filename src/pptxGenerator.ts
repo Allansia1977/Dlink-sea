@@ -13,9 +13,9 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
   for (const store of stores) {
     if (store.photos.length === 0) continue;
 
-    // Chunk photos into groups of 8
-    for (let i = 0; i < store.photos.length; i += 8) {
-      const slidePhotos = store.photos.slice(i, i + 8);
+    // Chunk photos into groups of 16
+    for (let i = 0; i < store.photos.length; i += 16) {
+      const slidePhotos = store.photos.slice(i, i + 16);
       const slide = pptx.addSlide();
 
       const todayDate = new Date().toLocaleDateString();
@@ -26,7 +26,7 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
           y: 0.1,
           w: "90%",
           h: 0.4,
-          fontSize: 24,
+          fontSize: 20,
           bold: true,
           color: "363636",
           align: "center",
@@ -38,7 +38,7 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
             y: 0.5,
             w: "90%",
             h: 0.3,
-            fontSize: 14,
+            fontSize: 12,
             color: "666666",
             align: "center",
           });
@@ -49,7 +49,7 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
           y: 0.1,
           w: "90%",
           h: 0.4,
-          fontSize: 24,
+          fontSize: 20,
           bold: true,
           color: "363636",
           align: "center",
@@ -66,17 +66,17 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
             y: 0.5,
             w: "90%",
             h: 0.3,
-            fontSize: 14,
+            fontSize: 12,
             color: "666666",
             align: "center",
           });
         }
       }
 
-      // Add Photos (up to 8 per slide)
-      // Layout: 2 rows, 4 columns
+      // Add Photos (up to 16 per slide)
+      // Layout: 4 rows, 4 columns
       const xPositions = [0.2, 2.6, 5.0, 7.4];
-      const yPositions = [1.0, 3.3];
+      const yPositions = [0.9, 2.0, 3.1, 4.2];
 
       slidePhotos.forEach((photoData, index) => {
         const row = Math.floor(index / 4);
@@ -87,8 +87,8 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
           x: xPositions[col],
           y: yPositions[row],
           w: 2.3,
-          h: 2.1,
-          sizing: { type: "contain", w: 2.3, h: 2.1 },
+          h: 1.0,
+          sizing: { type: "contain", w: 2.3, h: 1.0 },
         });
       });
 
