@@ -74,9 +74,10 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
       }
 
       // Add Photos (up to 16 per slide)
-      // Layout: 4 rows, 4 columns
-      const xPositions = [0.2, 2.6, 5.0, 7.4];
-      const yPositions = [0.9, 2.0, 3.1, 4.2];
+      // Layout: 4 rows, 4 columns (4:3 aspect ratio)
+      // Centered grid: (10 - 4*1.6) / 2 = 1.8 start X
+      const xPositions = [1.8, 3.4, 5.0, 6.6];
+      const yPositions = [0.85, 2.05, 3.25, 4.45];
 
       slidePhotos.forEach((photoData, index) => {
         const row = Math.floor(index / 4);
@@ -86,9 +87,9 @@ export async function generatePPTX(stores: Store[]): Promise<pptxgen> {
           data: photoData,
           x: xPositions[col],
           y: yPositions[row],
-          w: 2.3,
-          h: 1.0,
-          sizing: { type: "contain", w: 2.3, h: 1.0 },
+          w: 1.6,
+          h: 1.2,
+          sizing: { type: "contain", w: 1.6, h: 1.2 },
         });
       });
 
